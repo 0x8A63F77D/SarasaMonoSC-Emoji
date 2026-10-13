@@ -21,6 +21,17 @@ REPLACEMENTS = (
 )
 
 
+
+def patch_color_collisions(path: Path) -> None:
+    """Preserve CBDT sequence outputs whose generic names collide with CJK glyphs."""
+    source = path.read_text(encoding="utf-8")
+    anchor = "    # Build emoji_glyphs_to_add preserving NotoColorEmoji's glyph ID order."
+    if source.count(anchor) != 1:
+        raise RuntimeError("Upstream Color merge changed; review collision patch")
+    patch = '    # SC overlay: generic glyphNNNNN names are not shared semantic identities.\n    # Keep required emoji and sequence outputs, renaming collisions before CBLC\n    # copying so the existing bitmap rename path preserves glyph-ID ordering.\n    required_names = set(emoji_cmap.values()) | {\n        entry.source_glyph for entry in sequence_entries\n    }\n    reserved_names = base_existing_names | set(emoji_all_glyph_order) | set(color_forced_rename.values())\n    for name in sorted(required_names & base_existing_names):\n        if name not in color_forced_rename:\n            candidate = f"{name}_color"\n            while candidate in reserved_names:\n                candidate += "_color"\n            color_forced_rename[name] = candidate\n            reserved_names.add(candidate)\n    emoji_cmap = {cp: color_forced_rename.get(name, name) for cp, name in emoji_cmap.items()}\n    sequence_entries = [\n        EmojiEntry(\n            codepoints=entry.codepoints,\n            source_glyph=color_forced_rename.get(entry.source_glyph, entry.source_glyph),\n            kind=entry.kind,\n            source_table_kind=entry.source_table_kind,\n        )\n        for entry in sequence_entries\n    ]\n\n'
+    path.write_text(source.replace(anchor, patch + anchor), encoding="utf-8")
+
+
 def adapt(root: Path, repository: str = "") -> list[str]:
     root = root.resolve()
     mandatory = (root / "config.yaml", root / "build.py", root / "tests" / "conftest.py")
@@ -45,6 +56,12 @@ def adapt(root: Path, repository: str = "") -> list[str]:
         if result != content:
             path.write_text(result, encoding="utf-8")
             changed.append(str(path.relative_to(root)))
+
+    engine = root / "src" / "emoji_merge.py"
+    if engine.is_file():
+        patch_color_collisions(engine)
+        if "src/emoji_merge.py" not in changed:
+            changed.append("src/emoji_merge.py")
 
     config = (root / "config.yaml").read_text(encoding="utf-8")
     tests = (root / "tests" / "conftest.py").read_text(encoding="utf-8")

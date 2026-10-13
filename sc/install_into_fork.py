@@ -32,7 +32,7 @@ def install(overlay: Path, fork: Path) -> list[str]:
         target = fork / path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(overlay / path, target)
-    shutil.copy2(overlay / 'README.md', fork / 'SC_README.md')
+    shutil.copy2(overlay / ('SC_README.md' if (overlay / 'SC_README.md').exists() else 'README.md'), fork / 'SC_README.md')
     shutil.copy2(overlay / 'SETUP_SC_CN.md', fork / 'SETUP_SC_CN.md')
     return list(FILES) + ['SC_README.md', 'SETUP_SC_CN.md']
 
