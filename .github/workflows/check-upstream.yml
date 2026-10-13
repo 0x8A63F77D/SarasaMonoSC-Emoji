@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   check:
+    if: github.repository == 'sspig0127/SarasaMonoTC-Emoji'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

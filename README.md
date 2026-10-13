@@ -1,3 +1,5 @@
+> **本仓库为 Sarasa Mono SC + Emoji 衍生项目。** 请阅读 [SC 说明](SC_README.md) 与 [部署指南](SETUP_SC_CN.md)。下文保留原 TC 项目的说明和署名；原 TC 发布工作流仅在上游仓库执行。
+
 # SarasaMonoTC-Emoji
 
 [![Tests](https://github.com/sspig0127/SarasaMonoTC-Emoji/actions/workflows/test.yml/badge.svg)](https://github.com/sspig0127/SarasaMonoTC-Emoji/actions/workflows/test.yml)

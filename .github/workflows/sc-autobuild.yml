@@ -1,0 +1,263 @@
+name: Auto-build Sarasa Mono SC Emoji
+
+on:
+  schedule:
+    - cron: '23 3 * * *'  # daily, UTC (GitHub may delay scheduled workflows)
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/sc-autobuild.yml"
+      - "sc/**"
+      - "tests/test_overlay.py"
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sc-autobuild.yml'
+      - 'sc/**'
+      - 'tests/test_overlay.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sarasa-sc-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'release' }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.versions.outputs.tag }}
+      sarasa_tag: ${{ steps.versions.outputs.sarasa_tag }}
+      should_build: ${{ steps.release.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Test SC overlay
+        run: python3 tests/test_overlay.py
+
+      - name: Discover upstream versions
+        id: versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 sc/discover.py
+
+      - name: Check existing release (skip if no changes)
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.versions.outputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          elif gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "Already published $TAG. No upstream changes."
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install toolchain
+        if: steps.release.outputs.build == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full unzip zip
+
+      - name: Clone upstream merge engine at exact commit
+        if: steps.release.outputs.build == 'true'
+        env:
+          MERGE_SHA: ${{ steps.versions.outputs.merge_sha }}
+        run: |
+          mkdir -p _build/upstream
+          git -C _build/upstream init -q
+          git -C _build/upstream remote add origin https://github.com/sspig0127/SarasaMonoTC-Emoji.git
+          git -C _build/upstream fetch --depth 1 origin "$MERGE_SHA"
+          git -C _build/upstream checkout -q --detach FETCH_HEAD
+          python3 sc/adapt.py _build/upstream
+
+      - name: Cache downloaded upstream fonts
+        if: steps.release.outputs.build == 'true'
+        id: cache-fonts
+        uses: actions/cache@v4
+        with:
+          path: _build/upstream/fonts/
+          key: sc-fonts-${{ steps.versions.outputs.sarasa_tag }}-${{ steps.versions.outputs.noto_color_sha }}-${{ steps.versions.outputs.noto_colrv1_sha }}-${{ steps.versions.outputs.mono_sha }}-${{ steps.versions.outputs.nerd_tag }}
+
+      - name: Download exact upstream font revisions
+        if: steps.release.outputs.build == 'true' && steps.cache-fonts.outputs.cache-hit != 'true'
+        env:
+          SARASA_TAG: ${{ steps.versions.outputs.sarasa_tag }}
+          NOTO_COLOR_SHA: ${{ steps.versions.outputs.noto_color_sha }}
+          NOTO_COLRV1_SHA: ${{ steps.versions.outputs.noto_colrv1_sha }}
+          MONO_SHA: ${{ steps.versions.outputs.mono_sha }}
+          NERD_TAG: ${{ steps.versions.outputs.nerd_tag }}
+        run: |
+          set -euo pipefail
+          cd _build/upstream
+          mkdir -p fonts/NerdFontsSymbolsOnly
+          sarasa_version="${SARASA_TAG#v}"
+          sarasa_asset="SarasaMonoSC-TTF-${sarasa_version}.7z"
+          curl -fL --retry 3 -o /tmp/sarasa-sc.7z \
+            "https://github.com/be5invis/Sarasa-Gothic/releases/download/${SARASA_TAG}/${sarasa_asset}"
+          7za e /tmp/sarasa-sc.7z -ofonts/ -y
+          curl -fL --retry 3 -o fonts/NotoColorEmoji.ttf \
+            "https://raw.githubusercontent.com/googlefonts/noto-emoji/${NOTO_COLOR_SHA}/2D/fonts/NotoColorEmoji.ttf"
+          curl -fL --retry 3 -o fonts/Noto-COLRv1.ttf \
+            "https://raw.githubusercontent.com/googlefonts/noto-emoji/${NOTO_COLRV1_SHA}/2D/fonts/Noto-COLRv1.ttf"
+          curl -fL --retry 3 -o 'fonts/NotoEmoji[wght].ttf' \
+            "https://raw.githubusercontent.com/google/fonts/${MONO_SHA}/ofl/notoemoji/NotoEmoji%5Bwght%5D.ttf"
+          curl -fL --retry 3 -o /tmp/nerd-symbols.zip \
+            "https://github.com/ryanoasis/nerd-fonts/releases/download/${NERD_TAG}/NerdFontsSymbolsOnly.zip"
+          unzip -j -o /tmp/nerd-symbols.zip 'SymbolsNerdFontMono-Regular.ttf' \
+            -d fonts/NerdFontsSymbolsOnly/
+
+      - name: Verify source files before building
+        if: steps.release.outputs.build == 'true'
+        run: |
+          set -euo pipefail
+          cd _build/upstream
+          for f in \
+            SarasaMonoSC-Regular.ttf SarasaMonoSC-Italic.ttf \
+            SarasaMonoSC-Bold.ttf SarasaMonoSC-BoldItalic.ttf \
+            NotoColorEmoji.ttf Noto-COLRv1.ttf 'NotoEmoji[wght].ttf' \
+            NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf; do
+            test -s "fonts/$f" || { echo "Missing: fonts/$f"; exit 1; }
+            file "fonts/$f"
+          done
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.release.outputs.build == 'true'
+        with:
+          python-version: '3.11'
+          enable-cache: true
+          cache-dependency-glob: '_build/upstream/uv.lock'
+
+      - name: Build all 16 fonts
+        if: steps.release.outputs.build == 'true'
+        working-directory: _build/upstream
+        run: |
+          set -euo pipefail
+          uv sync --group dev
+          uv run python build.py --parallel 2
+          uv run python build.py --lite --parallel 2
+          uv run python build.py --colrv1 --parallel 2
+          uv run python build.py --nerd-lite --parallel 2
+
+      - name: Run upstream regression tests and SC-specific checks
+        if: steps.release.outputs.build == 'true'
+        working-directory: _build/upstream
+        run: |
+          set -euo pipefail
+          uv run pytest tests/ -v --tb=short
+          uv run python "$GITHUB_WORKSPACE/sc/verify.py" .
+
+      - name: Package 4 independently installable variants
+        if: steps.release.outputs.build == 'true'
+        env:
+          TAG: ${{ steps.versions.outputs.tag }}
+          SARASA_TAG: ${{ steps.versions.outputs.sarasa_tag }}
+          NERD_TAG: ${{ steps.versions.outputs.nerd_tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          for spec in \
+            'fonts:SarasaMonoSCEmoji' \
+            'fonts-lite:SarasaMonoSCEmojiLite' \
+            'fonts-colrv1:SarasaMonoSCEmojiCOLRv1' \
+            'fonts-nerd-lite:SarasaMonoSCEmojiLiteNerd'; do
+            directory="${spec%%:*}"
+            family="${spec#*:}"
+            cp provenance.json "_build/upstream/output/${directory}/provenance.json"
+            cp _build/upstream/LICENSE "_build/upstream/output/${directory}/LICENSE"
+            if [ "$directory" = 'fonts-nerd-lite' ]; then
+              curl -fL --retry 3 \
+                "https://raw.githubusercontent.com/ryanoasis/nerd-fonts/${NERD_TAG}/LICENSE" \
+                -o "_build/upstream/output/${directory}/LICENSE-Nerd-Fonts"
+            fi
+            (cd "_build/upstream/output/${directory}" && zip -q -r "$GITHUB_WORKSPACE/dist/${family}-${TAG}.zip" .)
+          done
+          cat > dist/release-notes.md <<EOF
+          Automated Sarasa Mono SC + Emoji build. All 16 font files passed upstream tests and SC-specific font validation.
+
+          - Sarasa Gothic: ${SARASA_TAG}
+          - Merge engine, Noto Emoji and Nerd Fonts: see the provenance.json bundled in each archive.
+          - Color, Lite, COLRv1 and Nerd Lite are packaged separately.
+          - Licensing: see LICENSE inside each archive (SIL OFL 1.1).
+          EOF
+          ls -lh dist/*.zip
+
+      - name: Upload validated release packages
+        if: steps.release.outputs.build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sc-release
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save build artifacts on failure for debugging
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sc-build-debug
+          path: |
+            provenance.json
+            _build/upstream/output/
+            dist/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  publish:
+    needs: prepare
+    if: github.event_name != 'pull_request' && needs.prepare.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sc-release
+          path: dist/
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          SARASA_TAG: ${{ needs.prepare.outputs.sarasa_tag }}
+        run: |
+          gh release create "$TAG" dist/*.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Sarasa Mono SC Emoji — ${SARASA_TAG} (${TAG})" \
+            --notes-file dist/release-notes.md \
+            --target "$GITHUB_SHA" \
+            --latest
+
+  keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prevent GitHub from disabling inactive public-repo schedules
+        run: |
+          set -euo pipefail
+          last_commit=$(git log -1 --format=%ct)
+          now=$(date -u +%s)
+          if (( now - last_commit > 35 * 86400 )); then
+            date -u '+%Y-%m-%dT%H:%M:%SZ' > .github/sc-keepalive.txt
+            git config user.name github-actions\[bot\]
+            git config user.email 41898282+github-actions\[bot\]@users.noreply.github.com
+            git add .github/sc-keepalive.txt
+            git commit -m 'chore: keep scheduled SC font builds active [skip ci]'
+            git push origin HEAD:main
+          else
+            echo "Repository is active; no keepalive commit necessary."
+          fi
