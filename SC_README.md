@@ -24,7 +24,7 @@ GitHub Actions checks for upstream changes **daily** (and can be manually dispat
 
 For a new fingerprint, the workflow downloads the exact source revisions, applies the SC adaptation, builds all four variants, runs all upstream regression tests and additional SC-specific font checks, then creates a GitHub Release with four ZIP files. A failed build/test **never publishes a Release**. Fingerprint tags are `sc-auto-<hash>`; `provenance.json` is included with each variant for reproducibility.
 
-**This is an auto-following source overlay, not a blind upstream Git merge.** The merge algorithm is always taken from the upstream project, so SC-specific edits are not overwritten by Git merges. Any incompatible upstream change blocks the Release and surfaces a failed Actions run. Scheduled runs may be delayed by GitHub.
+**This is an auto-following source overlay, not a blind upstream Git merge.** The merge engine is taken from the upstream project, with a guarded SC adaptation that also preserves Color emoji sequence glyphs when internal names collide with CJK glyph names. SC-specific edits are not overwritten by Git merges. Any incompatible upstream change blocks the Release and surfaces a failed Actions run. Scheduled runs may be delayed by GitHub.
 
 ## Setup (GitHub)
 
