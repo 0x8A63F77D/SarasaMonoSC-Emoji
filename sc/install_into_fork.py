@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Install only SC-specific overlay files into a clone of the upstream GitHub fork.
 
-This preserves the fork's README, LICENSE, original code and workflows.
+Preserves README, LICENSE and code; archives inherited TC workflows outside Actions.
 """
 from pathlib import Path
 import argparse
@@ -12,6 +12,7 @@ FILES = (
     'sc/adapt.py',
     'sc/discover.py',
     'sc/verify.py',
+    'sc/release.py',
     'sc/install_into_fork.py',
     'tests/test_overlay.py',
     'LICENSE-AUTOMATION',
@@ -28,13 +29,25 @@ def install(overlay: Path, fork: Path) -> list[str]:
     for path in FILES:
         if not (overlay / path).is_file():
             raise FileNotFoundError(f'Overlay file is missing: {overlay / path}')
+    archived = []
+    for name in ('release.yml', 'check-upstream.yml'):
+        source = fork / '.github/workflows' / name
+        target = fork / '.github/upstream-workflows' / name
+        if source.exists():
+            if target.exists():
+                raise FileExistsError(f'Cannot archive inherited workflow: {target}')
+            archived.append((source, target))
+    for source, target in archived:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source.rename(target)
+
     for path in FILES:
         target = fork / path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(overlay / path, target)
     shutil.copy2(overlay / ('SC_README.md' if (overlay / 'SC_README.md').exists() else 'README.md'), fork / 'SC_README.md')
     shutil.copy2(overlay / 'SETUP_SC_CN.md', fork / 'SETUP_SC_CN.md')
-    return list(FILES) + ['SC_README.md', 'SETUP_SC_CN.md']
+    return list(FILES) + ['SC_README.md', 'SETUP_SC_CN.md'] + [str(target.relative_to(fork)) for _, target in archived]
 
 
 def main() -> None:

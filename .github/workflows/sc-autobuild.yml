@@ -54,15 +54,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.versions.outputs.tag }}
           EVENT_NAME: ${{ github.event_name }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          elif gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "build=false" >> "$GITHUB_OUTPUT"
-            echo "Already published $TAG. No upstream changes."
-          else
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          fi
+        run: python3 sc/release.py check
 
       - name: Install toolchain
         if: steps.release.outputs.build == 'true'
@@ -221,6 +213,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           name: sc-release
@@ -231,13 +226,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.prepare.outputs.tag }}
           SARASA_TAG: ${{ needs.prepare.outputs.sarasa_tag }}
-        run: |
-          gh release create "$TAG" dist/*.zip \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Sarasa Mono SC Emoji — ${SARASA_TAG} (${TAG})" \
-            --notes-file dist/release-notes.md \
-            --target "$GITHUB_SHA" \
-            --latest
+        run: python3 sc/release.py publish
 
   keepalive:
     if: github.event_name == 'schedule'

@@ -20,8 +20,8 @@
    ```
 
 5. 在 GitHub 的 **Settings → Actions → General → Workflow permissions** 中启用 **Read and write permissions**。若组织级策略禁止该权限，需要由仓库管理员处理。
-6. 在 **Actions** 页面启用新工作流 **Auto-build Sarasa Mono SC Emoji**（公开 Fork 的定时工作流通常默认关闭）。本仓库继承的 `Release` 和 `Check upstream` 工作流已限制为仅在 TC 上游仓库运行。
-7. 运行 **Actions → Auto-build Sarasa Mono SC Emoji → Run workflow**。验证成功后，在仓库 **Releases** 下载四个 ZIP。
+6. 在 **Actions** 页面启用新工作流 **Auto-build Sarasa Mono SC Emoji**（公开 Fork 的定时工作流通常默认关闭）。安装脚本会将继承的 `Release` 和 `Check upstream` 工作流归档至 `.github/upstream-workflows/`，避免 TC 流程继续执行；本仓库保留的 TC 工作流也已限制为仅在 TC 上游运行。
+7. 运行 **Actions → Auto-build Sarasa Mono SC Emoji → Run workflow**。验证成功后，在仓库 **Releases** 下载四个 ZIP。若发布上传中断，再次运行会恢复草稿并补传附件；仅公开且四个附件齐全的版本才跳过。
 
 默认每天 UTC 03:23 检查上游。只有源文件或者适配层发生变化才构建并发布。四种变体、16 个字体文件必须全部构建及校验通过，才能发布 Release；失败不会发布半成品。
 
