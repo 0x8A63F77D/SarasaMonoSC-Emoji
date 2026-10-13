@@ -1,5 +1,7 @@
 # SarasaMonoSC-Emoji
 
+[简体中文](README.md) · [Original TC project documentation](UPSTREAM_README.md)
+
 Automated **Sarasa Mono SC + Noto Emoji** font releases. The four variants from [sspig0127/SarasaMonoTC-Emoji](https://github.com/sspig0127/SarasaMonoTC-Emoji) are preserved:
 
 | Variant | Family | Emoji |
@@ -28,9 +30,9 @@ For a new fingerprint, the workflow downloads the exact source revisions, applie
 
 ## Setup (GitHub)
 
-The smallest maintained repo contains only the SC overlay and its workflow (this ZIP). It may be used either as a new standalone repository or committed into a GitHub fork of the TC project. If using a fork, the installer archives inherited upstream workflows (`Release` and `Check upstream`) under `.github/upstream-workflows/`, outside the Actions workflow directory. This repository also guards its retained TC workflows to run only in the original upstream repository. The SC auto-build workflow is self-contained and does not require a Git remote named `upstream`. The original fork's `LICENSE` and `README.md` must not be overwritten by the ZIP; the installer preserves them.
+This repository maintains the SC overlay and its workflow alongside the inherited TC source. The overlay can also be installed into another GitHub fork of the TC project. If using a fork, the installer archives inherited upstream workflows (`Release` and `Check upstream`) under `.github/upstream-workflows/`, outside the Actions workflow directory. This repository also guards its retained TC workflows to run only in the original upstream repository. The SC auto-build workflow is self-contained and does not require a Git remote named `upstream`. The installer preserves the target fork's `LICENSE` and `README.md`. In this repository, the original TC README is archived as `UPSTREAM_README.md`.
 
-1. Create a public GitHub repository named `SarasaMonoSC-Emoji`, or fork the TC repo and use `python sc/install_into_fork.py /path/to/fork` to copy only SC-specific files (see `SETUP_SC_CN.md`).
+1. Fork this repository and enable Actions, or clone this repository and use `python sc/install_into_fork.py /path/to/another-tc-fork` to copy SC-specific files into an existing TC fork (see `SETUP_SC_CN.md`).
 2. Push this overlay to its `main` branch. If you use a fork, its original files can remain, but the `sc/` overlay and `sc-autobuild.yml` control SC releases.
 3. In **Settings → Actions → General → Workflow permissions**, choose **Read and write permissions** (needed to create Releases with `GITHUB_TOKEN`). Ensure Actions are enabled.
 4. Open **Actions → Auto-build Sarasa Mono SC Emoji → Run workflow** to build immediately. Thereafter, the scheduled job automatically checks for changes daily.
