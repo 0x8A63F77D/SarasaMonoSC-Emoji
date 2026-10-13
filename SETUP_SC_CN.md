@@ -14,7 +14,7 @@
 4. 进入 Fork 工作目录，提交并推送：
 
    ```bash
-   git add .github/workflows/sc-autobuild.yml sc/ tests/test_overlay.py LICENSE-AUTOMATION SC_README.md SETUP_SC_CN.md
+   git add -A .github sc/ tests/test_overlay.py LICENSE-AUTOMATION SC_README.md SETUP_SC_CN.md
    git commit -m "feat: SC font variants with automated upstream rebuild"
    git push origin main
    ```
