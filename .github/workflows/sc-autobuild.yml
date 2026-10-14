@@ -11,6 +11,7 @@ on:
       - "sc/**"
       - "tests/test_overlay.py"
       - "tests/test_coverage.py"
+      - "tests/test_preview_async.cjs"
   push:
     branches: [main]
     paths:
@@ -18,6 +19,7 @@ on:
       - 'sc/**'
       - 'tests/test_overlay.py'
       - 'tests/test_coverage.py'
+      - 'tests/test_preview_async.cjs'
 
 permissions:
   contents: read
@@ -43,6 +45,9 @@ jobs:
 
       - name: Test SC overlay
         run: python3 tests/test_overlay.py
+
+      - name: Test preview asynchronous loading
+        run: node tests/test_preview_async.cjs
 
       - name: Discover upstream versions
         id: versions

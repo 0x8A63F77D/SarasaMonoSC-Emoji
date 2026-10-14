@@ -24,7 +24,7 @@ python3 sc-overlay/sc/install_into_fork.py /path/to/your/tc-fork
 
 ```bash
 cd /path/to/your/tc-fork
-git add -A .github sc/ tests/test_overlay.py tests/test_coverage.py LICENSE-AUTOMATION SC_README.md SETUP_SC_CN.md
+git add -A .github sc/ tests/test_overlay.py tests/test_coverage.py tests/test_preview_async.cjs LICENSE-AUTOMATION SC_README.md SETUP_SC_CN.md
 git commit -m "feat: SC font variants with automated upstream rebuild"
 git push origin main
 ```

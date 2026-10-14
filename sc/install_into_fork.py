@@ -18,6 +18,7 @@ FILES = (
     'sc/install_into_fork.py',
     'tests/test_overlay.py',
     'tests/test_coverage.py',
+    'tests/test_preview_async.cjs',
     'LICENSE-AUTOMATION',
 )
 
