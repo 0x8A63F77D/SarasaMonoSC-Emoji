@@ -5,7 +5,7 @@
 1. 将通过验证的 SC 改造 PR 合并到 `main`。
 2. 确认仓库已启用 Actions，且策略允许工作流请求 `contents: write`。发布和保活任务需要该权限，构建任务只申请读取权限。
 3. 合并相关代码会触发 **Auto-build Sarasa Mono SC Emoji**。也可在 Actions 页面选择该工作流，点击 **Run workflow**，选择 `main`。
-4. 全部字体构建、测试和校验通过后，在 [Releases](https://github.com/0x8A63F77D/SarasaMonoSC-Emoji/releases) 下载四个 ZIP。
+4. 全部字体构建、测试和校验通过后，在 [Releases](https://github.com/0x8A63F77D/SarasaMonoSC-Emoji/releases) 下载四个 ZIP。每个 ZIP 内的 `visual-check.html` 可本地加载 TTF 进行目视检查，`coverage.json` 记录实际成品覆盖与度量。
 
 PR 构建不会发布 Release，只上传临时构建产物。发布上传中断时，再次运行会恢复草稿并补传附件；只有已公开且四个附件齐全的版本才跳过。
 
@@ -24,7 +24,7 @@ python3 sc-overlay/sc/install_into_fork.py /path/to/your/tc-fork
 
 ```bash
 cd /path/to/your/tc-fork
-git add -A .github sc/ tests/test_overlay.py LICENSE-AUTOMATION SC_README.md SETUP_SC_CN.md
+git add -A .github sc/ tests/test_overlay.py tests/test_coverage.py LICENSE-AUTOMATION SC_README.md SETUP_SC_CN.md
 git commit -m "feat: SC font variants with automated upstream rebuild"
 git push origin main
 ```

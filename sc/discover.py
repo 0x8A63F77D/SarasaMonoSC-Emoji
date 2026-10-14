@@ -34,8 +34,9 @@ def source_fingerprint(sources: dict) -> str:
 
 def overlay_fingerprint(root: Path) -> str:
     """Hash only build-relevant overlay files, not keepalive/documentation commits."""
-    names = [Path('.github/workflows/sc-autobuild.yml'), Path('tests/test_overlay.py')]
+    names = [Path('.github/workflows/sc-autobuild.yml'), Path('tests/test_overlay.py'), Path('tests/test_coverage.py')]
     names += [p.relative_to(root) for p in sorted((root / 'sc').glob('*.py'))]
+    names += [p.relative_to(root) for p in sorted((root / 'sc' / 'preview').glob('*.html'))]
     hasher = hashlib.sha256()
     for name in sorted(names):
         path = root / name

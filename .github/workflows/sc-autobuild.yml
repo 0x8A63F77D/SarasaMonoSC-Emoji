@@ -10,12 +10,14 @@ on:
       - ".github/workflows/sc-autobuild.yml"
       - "sc/**"
       - "tests/test_overlay.py"
+      - "tests/test_coverage.py"
   push:
     branches: [main]
     paths:
       - '.github/workflows/sc-autobuild.yml'
       - 'sc/**'
       - 'tests/test_overlay.py'
+      - 'tests/test_coverage.py'
 
 permissions:
   contents: read
@@ -150,6 +152,11 @@ jobs:
           uv run pytest tests/ -v --tb=short
           uv run python "$GITHUB_WORKSPACE/sc/verify.py" .
 
+      - name: Generate coverage reports and offline visual checks
+        if: steps.release.outputs.build == 'true'
+        working-directory: _build/upstream
+        run: uv run python "$GITHUB_WORKSPACE/sc/coverage.py" .
+
       - name: Package 4 independently installable variants
         if: steps.release.outputs.build == 'true'
         env:
@@ -181,6 +188,7 @@ jobs:
           - Sarasa Gothic: ${SARASA_TAG}
           - Merge engine, Noto Emoji and Nerd Fonts: see the provenance.json bundled in each archive.
           - Color, Lite, COLRv1 and Nerd Lite are packaged separately.
+          - Open visual-check.html in each archive and select its TTF files for offline inspection; coverage.json includes all four styles.
           - Licensing: see LICENSE inside each archive (SIL OFL 1.1).
           EOF
           ls -lh dist/*.zip

@@ -11,7 +11,7 @@ Automated **Sarasa Mono SC + Noto Emoji** font releases. The four variants from 
 | COLRv1 | `SarasaMonoSCEmojiCOLRv1` | Vector color |
 | Nerd Lite | `SarasaMonoSCEmojiLiteNerd` | Monochrome + Nerd Fonts icons |
 
-Each variant contains Regular, Italic, Bold and BoldItalic (16 TTF files total).
+Each variant contains Regular, Italic, Bold and BoldItalic (16 TTF files total). Each ZIP also contains an offline `visual-check.html` and `coverage.json`: open the page and select matching TTF files, without installing or uploading them. The inspector verifies SHA-256, supports style/size switching, alignment grids and searchable coverage, and suppresses known missing or empty samples. To compare variants, import their coverage reports before loading their fonts. Coverage is source-relative cmap/direct ccmp structure, not a full shaping or Unicode conformance test.
 
 ## How it works
 
