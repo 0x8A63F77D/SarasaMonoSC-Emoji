@@ -3,7 +3,7 @@
 ## 在本仓库首次发布
 
 1. 将通过验证的 SC 改造 PR 合并到 `main`。
-2. 确认仓库已启用 Actions，且策略允许工作流请求 `contents: write`。发布和保活任务需要该权限，构建任务只申请读取权限。
+2. 确认仓库已启用 Actions，且策略允许工作流请求 `contents: write`。发布任务需要该权限；独立保活任务仅申请 `actions: write`，构建任务只申请读取权限。
 3. 合并相关代码会触发 **Auto-build Sarasa Mono SC Emoji**。也可在 Actions 页面选择该工作流，点击 **Run workflow**，选择 `main`。
 4. 全部字体构建、测试和校验通过后，在 [Releases](https://github.com/0x8A63F77D/SarasaMonoSC-Emoji/releases) 下载四个 ZIP。每个 ZIP 内的 `visual-check.html` 可本地加载 TTF 进行目视检查，`coverage.json` 记录实际成品覆盖与度量。
 
@@ -46,7 +46,7 @@ git push origin main
 - Nerd Fonts 最新 Release 的 Symbols Only 字体。
 - SC 专用代码、测试及构建工作流。
 
-每个 ZIP 包含字体、许可证和 `provenance.json`，记录实际来源版本、提交 SHA 及适配层内容哈希。文档和保活提交不改变构建指纹。超过 35 天无提交时，定时任务会按需提交保活记录；GitHub 的定时运行可能延迟。
+每个 ZIP 包含字体、许可证和 `provenance.json`，记录实际来源版本、提交 SHA 及适配层内容哈希。文档更新不改变构建指纹。定时任务通过 GitHub API 刷新工作流启用状态以保活，不直接推送主分支；GitHub 的定时运行可能延迟。
 
 ## 验证与维护
 

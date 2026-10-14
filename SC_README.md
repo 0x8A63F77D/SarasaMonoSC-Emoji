@@ -15,14 +15,14 @@ Each variant contains Regular, Italic, Bold and BoldItalic (16 TTF files total).
 
 ## How it works
 
-GitHub Actions checks for upstream changes **daily** (and can be manually dispatched). A low-frequency housekeeping commit prevents GitHub from suspending the schedule after 60 days of inactivity. Changes to any of these sources result in a new version fingerprint:
+GitHub Actions checks for upstream changes **daily** (and can be manually dispatched). A separate job refreshes the workflow via the GitHub enable API to prevent schedule suspension due to inactivity, without pushing to the protected default branch. Changes to any of these sources result in a new version fingerprint:
 
 1. `sspig0127/SarasaMonoTC-Emoji` **main commit** (the Python/fontTools merge engine)
 2. `be5invis/Sarasa-Gothic` **latest release** (`SarasaMonoSC-TTF-...7z`)
 3. `googlefonts/noto-emoji` latest commits touching its **two 2D font files** (bitmap and COLRv1)
 4. `google/fonts` latest commit affecting **NotoEmoji[wght].ttf**
 5. `ryanoasis/nerd-fonts` **latest release**
-6. Content hash of SC overlay scripts and CI config (so keepalive/doc edits do not trigger builds)
+6. Content hash of SC overlay scripts and CI config (so documentation edits do not trigger builds)
 
 For a new fingerprint, the workflow downloads the exact source revisions, applies the SC adaptation, builds all four variants, runs all upstream regression tests and additional SC-specific font checks, then creates a GitHub Release with four ZIP files. A failed build/test **never publishes a Release**. Interrupted uploads retain a draft that subsequent runs repair; only a published release with all four uploaded packages is skipped. Fingerprint tags are `sc-auto-<hash>`; `provenance.json` is included with each variant for reproducibility.
 
