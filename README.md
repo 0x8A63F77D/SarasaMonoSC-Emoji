@@ -12,8 +12,9 @@
 ## 下载与安装
 
 1. 在本仓库的 [Releases](https://github.com/0x8A63F77D/SarasaMonoSC-Emoji/releases) 下载所需变体的 ZIP。
-2. 解压后安装其中的 `.ttf` 文件，在编辑器或终端中选择对应字体族。
-3. 四种变体使用不同字体族名称，可以同时安装。
+2. 解压后打开 `visual-check.html`，选择包内的 TTF 即可离线预览，无需先安装字体。
+3. 安装所需 `.ttf` 文件，在编辑器或终端中选择对应字体族。
+4. 四种变体使用不同字体族名称，可以同时安装。
 
 如果尚无 Release，可查看 Actions 的构建结果。PR 构建仅提供临时 `sc-release` Artifact（保留 7 天），合并到 `main` 后才创建正式 Release。
 
@@ -25,6 +26,14 @@
 | Nerd Lite | `SarasaMonoSCEmojiLiteNerd` | 单色 Emoji + Nerd Fonts PUA 图标 | 终端提示符、开发图标和单字体配置 |
 
 例如 Color 包包含 `SarasaMonoSCEmoji-Regular.ttf`、`SarasaMonoSCEmoji-Italic.ttf`、`SarasaMonoSCEmoji-Bold.ttf` 和 `SarasaMonoSCEmoji-BoldItalic.ttf`。其他变体使用各自的字体族名称作为文件名前缀。
+
+## 目视检查与覆盖报告
+
+每个 ZIP 附带 `visual-check.html`、`coverage.json` 和使用说明。检查页支持加载多个字重、导入其他变体的报告、调整字号、显示单列对齐网格、自定义中文与代码样例，并按字符或码点搜索 Emoji 和 Nerd 图标。字体和报告均在本地读取，不上传。
+
+页面以 SHA-256 校验 TTF 与报告是否对应；未加载、未收录或空字形条目不显示系统回退字形。覆盖报告列出四个字重的源字体候选覆盖、cmap 映射、直接 ccmp 组合规则、字形数量、剩余字形槽、度量及文件大小。它统计的是字体表结构，不是完整 Unicode Emoji 覆盖，也不替代浏览器、CLion 和终端的实际渲染检查。
+
+同时比较多个变体时，在检查页先导入其他包的 `coverage.json`，再选择对应 TTF。浏览器若拒绝加载字体，页面会明确显示错误，不使用系统字体代替预览。
 
 ## 自动更新
 
