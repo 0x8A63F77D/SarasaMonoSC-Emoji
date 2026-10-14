@@ -21,6 +21,7 @@ on:
 
 jobs:
   release:
+    if: github.repository == 'sspig0127/SarasaMonoTC-Emoji'
     runs-on: ubuntu-latest
 
     permissions:
